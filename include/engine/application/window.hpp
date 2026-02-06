@@ -22,9 +22,10 @@ namespace engine
         Window(WindowSpec *Spec);
         bool WindowShouldClose();
 
+        ~Window();
+
     private:
         Window() {};
-        ~Window();
 
         GLFWwindow *m_Window = nullptr;
     };

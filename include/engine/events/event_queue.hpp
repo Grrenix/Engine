@@ -59,6 +59,36 @@ namespace engine
             }
         }
 
+        template <typename EventT, typename DispatcherT>
+        void DispatchEventType(DispatcherT &dispatcher)
+        {
+            static_assert(std::is_base_of_v<Event<EventT>, EventT>,
+                          "EventT must derive from Event<EventT>");
+
+            EventType type = EventT::GetStaticType();
+
+            std::queue<QueuedEvent> remaining;
+
+            while (!queue.empty())
+            {
+                auto &q = queue.front();
+
+                if (q.type == type)
+                {
+                    dispatcher->DispatchRaw(q.type, q.event);
+                    q.destroy(q.event);
+                }
+                else
+                {
+                    remaining.push(q);
+                }
+
+                queue.pop();
+            }
+
+            queue = std::move(remaining);
+        }
+
         ~EventQueue()
         {
             Clear();

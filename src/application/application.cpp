@@ -1,6 +1,7 @@
 #include "engine/application/application.hpp"
 
 #include "engine/application/window.hpp"
+#include "engine/events/window_events.hpp"
 
 namespace engine
 {
@@ -33,5 +34,9 @@ namespace engine
             glfwPollEvents();
             m_EventQueue->DispatchAll(m_EventDispatcher);
         }
+
+        // Window Destroyed
+        Application::GetApplication()->m_EventQueue->Push(WindowDestroyedEvent(m_Window));
+        m_EventQueue->DispatchEventType<WindowDestroyedEvent>(m_EventDispatcher);
     }
 }
