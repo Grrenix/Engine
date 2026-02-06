@@ -8,6 +8,7 @@ add_library(engine
     src/pch.cpp
     src/engine.cpp
     src/application/application.cpp
+    src/application/window.cpp
 )
 
 target_include_directories(engine
@@ -26,4 +27,4 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(external/glfw)
-target_link_libraries(engine PRIVATE glfw)
+target_link_libraries(engine PUBLIC glfw)
