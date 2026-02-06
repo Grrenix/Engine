@@ -12,7 +12,10 @@ namespace engine
         std::string_view Title;
         int32_t Width;
         int32_t Height;
+        bool Fullscreen;
+        bool Borderless;
     };
+
     class Window
     {
     public:
