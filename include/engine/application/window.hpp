@@ -9,11 +9,11 @@ namespace engine
 
     struct WindowSpec
     {
-        std::string_view Title;
-        int32_t Width;
-        int32_t Height;
-        bool Fullscreen;
-        bool Borderless;
+        std::string_view Title = "New Window";
+        int32_t Width = 640;
+        int32_t Height = 480;
+        bool Fullscreen = false;
+        bool Borderless = false;
     };
 
     class Window
