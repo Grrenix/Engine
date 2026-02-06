@@ -1,5 +1,8 @@
 #include "engine/application/window.hpp"
 
+#include "engine/application/application.hpp"
+#include "engine/events/window_events.hpp"
+
 namespace engine
 {
     Window::Window(WindowSpec *Spec)
@@ -23,6 +26,14 @@ namespace engine
         }
 
         m_Window = glfwCreateWindow(Spec->Width, Spec->Height, Spec->Title.data(), Spec->Fullscreen ? glfwGetPrimaryMonitor() : NULL, NULL);
+
+        Application::GetApplication()->m_EventQueue->Push(WindowOpenedEvent(this));
+    }
+
+    Window::~Window()
+    {
+        glfwDestroyWindow(m_Window);
+        Application::GetApplication()->m_EventQueue->Push(WindowDestroyedEvent(this));
     }
 
     bool Window::WindowShouldClose()

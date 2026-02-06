@@ -9,6 +9,10 @@ add_library(engine
     src/engine.cpp
     src/application/application.cpp
     src/application/window.cpp
+    src/events/event_dispatcher.cpp
+    src/events/event_queue.cpp
+    src/events/event.cpp
+    src/events/window_events.cpp
 )
 
 target_include_directories(engine

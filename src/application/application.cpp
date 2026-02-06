@@ -4,9 +4,20 @@
 
 namespace engine
 {
+
+    Application *Application::p_Singleton = nullptr;
+
+    Application *Application::GetApplication()
+    {
+        return p_Singleton;
+    }
+
     Application *Application::New()
     {
-        return new Application();
+        p_Singleton = new Application();
+        p_Singleton->m_EventDispatcher = new EventDispatcher();
+        p_Singleton->m_EventQueue = new EventQueue();
+        return p_Singleton;
     }
 
     Application *Application::WithWindowSpec(WindowSpec *Spec)
@@ -20,6 +31,7 @@ namespace engine
         while (!m_Window->WindowShouldClose())
         {
             glfwPollEvents();
+            m_EventQueue->DispatchAll(m_EventDispatcher);
         }
     }
 }

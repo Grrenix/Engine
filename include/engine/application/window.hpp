@@ -24,7 +24,7 @@ namespace engine
 
     private:
         Window() {};
-        ~Window() {};
+        ~Window();
 
         GLFWwindow *m_Window = nullptr;
     };
