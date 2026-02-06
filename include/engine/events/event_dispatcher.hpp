@@ -28,20 +28,7 @@ namespace engine
             DispatchRaw(event.GetType(), &event);
         };
 
-        template <typename EventT>
-        void DispatchRaw(EventType type, const EventT &event) const
-        {
-            auto it = m_Handlers.find(type);
-            if (it == m_Handlers.end())
-            {
-                return;
-            }
-
-            for (auto &handler : it->second)
-            {
-                handler(&event);
-            }
-        };
+        void DispatchRaw(EventType type, const void *event) const;
 
     private:
         std::unordered_map<EventType, std::vector<HandlerFn>> m_Handlers;
