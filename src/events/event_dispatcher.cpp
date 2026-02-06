@@ -12,7 +12,7 @@ namespace engine
 
         for (auto &handler : it->second)
         {
-            handler(&event);
+            handler(event);
         }
     }
 }

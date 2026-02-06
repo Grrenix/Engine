@@ -22,11 +22,13 @@ namespace engine
         Window(WindowSpec *Spec);
         bool WindowShouldClose();
 
+        const GLFWwindow *GetWindowHandle();
+
         ~Window();
 
     private:
         Window() {};
-
         GLFWwindow *m_Window = nullptr;
     };
+    void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 }

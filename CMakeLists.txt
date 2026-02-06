@@ -8,10 +8,12 @@ add_library(engine
     src/pch.cpp
     src/engine.cpp
     src/application/application.cpp
+    src/application/keyboard_map.cpp
     src/application/window.cpp
     src/events/event_dispatcher.cpp
     src/events/event_queue.cpp
     src/events/event.cpp
+    src/events/input_events.cpp
     src/events/window_events.cpp
 )
 
