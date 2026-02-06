@@ -1,6 +1,7 @@
 #pragma once
 
-#include <queue>
+#include <list>
+#include <functional>
 
 #include "event.hpp"
 
@@ -12,6 +13,7 @@ namespace engine
         void *event;
         void (*destroy)(void *);
     };
+
     class EventQueue
     {
     public:
@@ -26,37 +28,21 @@ namespace engine
 
             EventT *heapEvent = new EventT(std::move(event));
 
-            queue.push({EventT::GetStaticType(),
-                        heapEvent,
-                        [](void *e)
-                        { delete static_cast<EventT *>(e); }});
-        }
-
-        bool Empty() const
-        {
-            return queue.empty();
-        }
-
-        void Clear()
-        {
-            while (!queue.empty())
-            {
-                auto &q = queue.front();
-                q.destroy(q.event);
-                queue.pop();
-            }
+            queue.emplace_back(QueuedEvent{EventT::GetStaticType(),
+                                           heapEvent,
+                                           [](void *e)
+                                           { delete static_cast<EventT *>(e); }});
         }
 
         template <typename DispatcherT>
         void DispatchAll(DispatcherT &dispatcher)
         {
-            while (!queue.empty())
+            for (auto &q : queue)
             {
-                auto &q = queue.front();
                 dispatcher->DispatchRaw(q.type, q.event);
                 q.destroy(q.event);
-                queue.pop();
             }
+            queue.clear();
         }
 
         template <typename EventT, typename DispatcherT>
@@ -67,26 +53,37 @@ namespace engine
 
             EventType type = EventT::GetStaticType();
 
-            std::queue<QueuedEvent> remaining;
-
-            while (!queue.empty())
+            auto it = queue.begin();
+            while (it != queue.end())
             {
-                auto &q = queue.front();
-
-                if (q.type == type)
+                if (it->type == type)
                 {
-                    dispatcher->DispatchRaw(q.type, q.event);
-                    q.destroy(q.event);
+                    dispatcher->DispatchRaw(it->type, it->event);
+                    it->destroy(it->event);
+
+                    it = queue.erase(it);
                 }
                 else
                 {
-                    remaining.push(q);
+                    ++it;
                 }
-
-                queue.pop();
             }
+        }
 
-            queue = std::move(remaining);
+        bool Empty() const
+        {
+            return queue.empty();
+        }
+
+        size_t Size() const { return queue.size(); }
+
+        void Clear()
+        {
+            for (auto &q : queue)
+            {
+                q.destroy(q.event);
+            }
+            queue.clear();
         }
 
         ~EventQueue()
@@ -95,7 +92,7 @@ namespace engine
         }
 
     private:
-        std::queue<QueuedEvent> queue;
+        std::list<QueuedEvent> queue;
     };
 
 }
