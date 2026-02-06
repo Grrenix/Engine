@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(engine
     src/pch.cpp
     src/engine.cpp
+    src/application.cpp
 )
 
 target_include_directories(engine
