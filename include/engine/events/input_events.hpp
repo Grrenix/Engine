@@ -12,9 +12,6 @@ namespace engine
         explicit KeyPressedEvent(int GlfwKey);
         explicit KeyPressedEvent(input::Key EngineKey);
 
-        KeyPressedEvent(const KeyPressedEvent &) = default;
-        KeyPressedEvent(KeyPressedEvent &&) = default;
-
     private:
         KeyPressedEvent() = delete;
     };
@@ -25,9 +22,6 @@ namespace engine
         input::Key Data = input::Key::kUnknown;
         explicit KeyReleasedEvent(int GlfwKey);
         explicit KeyReleasedEvent(input::Key EngineKey);
-
-        KeyReleasedEvent(const KeyReleasedEvent &) = default;
-        KeyReleasedEvent(KeyReleasedEvent &&) = default;
 
     private:
         KeyReleasedEvent() = delete;

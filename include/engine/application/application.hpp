@@ -1,7 +1,10 @@
 #pragma once
 
+#include <chrono>
+
 #include "engine/events/event_dispatcher.hpp"
 #include "engine/events/event_queue.hpp"
+#include "engine/application/input_state.hpp"
 
 namespace engine
 {
@@ -12,13 +15,20 @@ namespace engine
         static Application *New();
         Application *WithWindowSpec(class WindowSpec *Spec);
 
-        virtual void Run();
+        void Run();
 
         EventDispatcher *m_EventDispatcher = nullptr;
         EventQueue *m_EventQueue = nullptr;
 
+        input::InputState *m_InputStates = nullptr;
+
+        float GetDeltaTime() const;
+
     private:
         class Window *m_Window = nullptr;
+
+        std::chrono::high_resolution_clock::time_point m_PreviousTime;
+        float m_DeltaTime;
 
     public:
         Application(Application &other) = delete;
