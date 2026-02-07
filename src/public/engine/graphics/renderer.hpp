@@ -7,7 +7,7 @@ namespace vk::raii
     class DebugUtilsMessengerEXT;
     class Instance;
     class PhysicalDevice;
-}
+} // namespace vk::raii
 
 namespace engine::graphics
 {

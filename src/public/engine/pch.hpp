@@ -1,17 +1,17 @@
 #pragma once
 
 // ===== Standard library =====
-#include <cstddef>  // For std::size_t
+#include <algorithm>
+#include <cstddef> // For std::size_t
 #include <cstdint>
+#include <filesystem>
+#include <functional>
+#include <iostream>
+#include <memory>
 #include <string>
-#include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <memory>
-#include <functional>
-#include <algorithm>
-#include <filesystem>
-#include <iostream>
+#include <vector>
 
 // ===== Platform =====
 #ifdef _WIN32

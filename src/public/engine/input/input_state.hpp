@@ -6,19 +6,19 @@
 
 namespace engine::input
 {
-    enum class KeyState
-    {
-        Unpressed,
-        Pressed
-    };
+  enum class KeyState
+  {
+    Unpressed,
+    Pressed
+  };
 
-    class InputState
-    {
-    public:
-        KeyState GetState(Key key);
-        void SetState(Key key, KeyState state);
+  class InputState
+  {
+  public:
+    KeyState GetState(Key key);
+    void SetState(Key key, KeyState state);
 
-    private:
-        std::unordered_map<Key, KeyState> m_States;
-    };
+  private:
+    std::unordered_map<Key, KeyState> m_States;
+  };
 }

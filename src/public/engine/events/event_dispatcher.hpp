@@ -15,9 +15,7 @@ namespace engine
         void Subscribe(std::function<void(const EventT &)> handler)
         {
             auto wrapper = [handler](const void *e)
-            {
-                handler(*static_cast<const EventT *>(e));
-            };
+            { handler(*static_cast<const EventT *>(e)); };
 
             m_Handlers[EventT::GetStaticType()].push_back(std::move(wrapper));
         };

@@ -1,10 +1,10 @@
 #include "engine/application/application.hpp"
 
-#include "engine/platform/window.hpp"
-#include "engine/events/window_events.hpp"
 #include "engine/events/input_events.hpp"
 #include "engine/events/update_event.hpp"
+#include "engine/events/window_events.hpp"
 #include "engine/input/input_state.hpp"
+#include "engine/platform/window.hpp"
 
 namespace engine
 {
@@ -38,14 +38,10 @@ namespace engine
 
         m_EventDispatcher->Subscribe<engine::KeyPressedEvent>(
             [&](const engine::KeyPressedEvent &e)
-            {
-                m_InputStates->SetState(e.Data, input::KeyState::Pressed);
-            });
+            { m_InputStates->SetState(e.Data, input::KeyState::Pressed); });
         m_EventDispatcher->Subscribe<engine::KeyReleasedEvent>(
             [&](const engine::KeyReleasedEvent &e)
-            {
-                m_InputStates->SetState(e.Data, input::KeyState::Unpressed);
-            });
+            { m_InputStates->SetState(e.Data, input::KeyState::Unpressed); });
 
         while (!m_Window->WindowShouldClose())
         {

@@ -5,8 +5,8 @@
 
 #include "engine/events/event_dispatcher.hpp"
 #include "engine/events/event_queue.hpp"
-#include "engine/input/input_state.hpp"
 #include "engine/graphics/renderer.hpp"
+#include "engine/input/input_state.hpp"
 
 namespace engine
 {

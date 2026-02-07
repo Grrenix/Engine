@@ -6,4 +6,4 @@ namespace engine
     {
         DeltaTime = inDeltaTime;
     }
-}
+} // namespace engine

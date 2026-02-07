@@ -1,7 +1,7 @@
 #pragma once
 
-#include <list>
 #include <functional>
+#include <list>
 
 #include "event.hpp"
 
@@ -28,10 +28,9 @@ namespace engine
 
             EventT *heapEvent = new EventT(std::move(event));
 
-            queue.emplace_back(QueuedEvent{EventT::GetStaticType(),
-                                           heapEvent,
-                                           [](void *e)
-                                           { delete static_cast<EventT *>(e); }});
+            queue.emplace_back(
+                QueuedEvent{EventT::GetStaticType(), heapEvent, [](void *e)
+                            { delete static_cast<EventT *>(e); }});
         }
 
         template <typename DispatcherT>
@@ -48,8 +47,7 @@ namespace engine
         template <typename EventT, typename DispatcherT>
         void DispatchEventType(DispatcherT &dispatcher)
         {
-            static_assert(std::is_base_of_v<Event<EventT>, EventT>,
-                          "EventT must derive from Event<EventT>");
+            static_assert(std::is_base_of_v<Event<EventT>, EventT>, "EventT must derive from Event<EventT>");
 
             EventType type = EventT::GetStaticType();
 
@@ -75,7 +73,10 @@ namespace engine
             return queue.empty();
         }
 
-        size_t Size() const { return queue.size(); }
+        size_t Size() const
+        {
+            return queue.size();
+        }
 
         void Clear()
         {
