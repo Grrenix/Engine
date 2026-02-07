@@ -49,7 +49,7 @@ target_link_libraries(engine PUBLIC glm::glm)
 
 
 find_package(Vulkan REQUIRED)
-target_link_libraries(engine PRIVATE Vulkan::Vulkan)
+target_link_libraries(engine PUBLIC Vulkan::Vulkan)
 target_compile_definitions(engine
     PRIVATE
     VULKAN_HPP_ENABLE_RAII

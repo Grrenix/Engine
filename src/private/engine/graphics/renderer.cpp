@@ -3,13 +3,10 @@
 #include <iostream>
 
 #include "GLFW/glfw3.h"
-#include "vulkan/vulkan_raii.hpp"
 
 #ifndef NDEBUG
 const std::vector<char const *> VALIDATION_LAYERS = {"VK_LAYER_KHRONOS_validation"};
 #endif
-
-const std::vector<char const *> DEVICE_EXTENSIONS = {vk::KHRSwapchainExtensionName};
 
 namespace engine::graphics
 {
@@ -23,11 +20,18 @@ namespace engine::graphics
         return vk::False;
     }
 
-    Renderer::Renderer() : m_Context(std::make_unique<vk::raii::Context>())
+    Renderer::Renderer()
+        : m_Context(),
+          m_Instance(nullptr),
+          m_DebugMessenger(nullptr),
+          m_PhysicalDevice(nullptr),
+          m_Device(nullptr),
+          m_GraphicsQueue(nullptr)
     {
         CreateInstance();
         SetupDebugMessenger();
         PickPhysicalDevice();
+        CreateLogicalDevice();
     }
 
     void Renderer::CreateInstance()
@@ -43,7 +47,7 @@ namespace engine::graphics
 
         requiredLayers.assign(VALIDATION_LAYERS.begin(), VALIDATION_LAYERS.end());
 
-        auto layerProperties = m_Context->enumerateInstanceLayerProperties();
+        auto layerProperties = m_Context.enumerateInstanceLayerProperties();
 
         if (std::ranges::any_of(requiredLayers, [&layerProperties](auto const &requiredLayer)
                                 { return std::ranges::none_of(layerProperties, [requiredLayer](auto const &layerProperty)
@@ -55,7 +59,7 @@ namespace engine::graphics
 #endif
         auto requiredExtensions = GetRequiredExtensions();
 
-        auto extensionPropeties = m_Context->enumerateInstanceExtensionProperties();
+        auto extensionPropeties = m_Context.enumerateInstanceExtensionProperties();
         for (uint32_t i = 0; i < requiredExtensions.size(); ++i)
         {
             if (std::ranges::none_of(extensionPropeties,
@@ -76,7 +80,7 @@ namespace engine::graphics
                                           .enabledExtensionCount = (uint32_t)requiredExtensions.size(),
                                           .ppEnabledExtensionNames = requiredExtensions.data()};
 
-        m_Instance.reset(new vk::raii::Instance(*m_Context, createInfo));
+        m_Instance = m_Context.createInstance(createInfo);
     }
 
     void Renderer::SetupDebugMessenger()
@@ -94,14 +98,13 @@ namespace engine::graphics
 
         vk::DebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfoEXT{
             .messageSeverity = severityFlags, .messageType = messageTypeFlags, .pfnUserCallback = &DebugCallback};
-        m_DebugMessenger = std::make_unique<vk::raii::DebugUtilsMessengerEXT>(
-            m_Instance->createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT));
+        m_DebugMessenger = m_Instance.createDebugUtilsMessengerEXT(debugUtilsMessengerCreateInfoEXT);
 #endif
     }
 
     void Renderer::PickPhysicalDevice()
     {
-        auto devices = m_Instance->enumeratePhysicalDevices();
+        auto devices = m_Instance.enumeratePhysicalDevices();
 
         const auto devIter = std::ranges::find_if(devices, [&](auto const &device)
                                                   {
@@ -116,7 +119,7 @@ namespace engine::graphics
 
         auto extensions = device.enumerateDeviceExtensionProperties();
         bool found = true;
-        for (auto const &extension : DEVICE_EXTENSIONS)
+        for (auto const &extension : m_DeviceExtension)
         {
             auto extensionIter = std::ranges::find_if(
                 extensions, [extension](auto const &ext) { return strcmp(ext.extensionName, extension) == 0; });
@@ -126,7 +129,7 @@ namespace engine::graphics
 
         if (isSuitable)
         {
-            m_PhysicalDevice = std::make_unique<vk::raii::PhysicalDevice>(device);
+            m_PhysicalDevice = device;
         }
 
         return isSuitable; });
@@ -135,6 +138,39 @@ namespace engine::graphics
         {
             throw std::runtime_error("Failed to find a suitable GPU");
         }
+    }
+
+    void Renderer::CreateLogicalDevice()
+    {
+
+        std::vector<vk::QueueFamilyProperties> queueFamilyProperties = m_PhysicalDevice.getQueueFamilyProperties();
+        uint32_t graphicsIndex = FindQueueFamilies(m_PhysicalDevice);
+
+        float queuePriority = 0.5f;
+
+        vk::DeviceQueueCreateInfo deviceQueueCreateInfo{
+            .queueFamilyIndex = graphicsIndex,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority};
+
+        vk::StructureChain<
+            vk::PhysicalDeviceFeatures2,
+            vk::PhysicalDeviceVulkan13Features,
+            vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
+            featureChain = {
+                {},
+                {.dynamicRendering = true},
+                {.extendedDynamicState = true}};
+
+        vk::DeviceCreateInfo deviceCreateInfo{
+            .pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
+            .queueCreateInfoCount = 1,
+            .pQueueCreateInfos = &deviceQueueCreateInfo,
+            .enabledExtensionCount = static_cast<uint32_t>(m_DeviceExtension.size()),
+            .ppEnabledExtensionNames = m_DeviceExtension.data()};
+
+        m_Device = m_PhysicalDevice.createDevice(deviceCreateInfo);
+        m_GraphicsQueue = m_Device.getQueue(graphicsIndex, 0);
     }
 
     std::vector<const char *> Renderer::GetRequiredExtensions()
@@ -148,6 +184,21 @@ namespace engine::graphics
 #endif
 
         return extensions;
+    }
+
+    uint32_t Renderer::FindQueueFamilies(vk::raii::PhysicalDevice physicalDevice)
+    {
+        std::vector<vk::QueueFamilyProperties> queueFamilyProperties = m_PhysicalDevice.getQueueFamilyProperties();
+
+        auto graphicsQueueFamilyProperty = std::find_if(
+            queueFamilyProperties.begin(),
+            queueFamilyProperties.end(),
+            [](const vk::QueueFamilyProperties &qfp)
+            {
+                return qfp.queueFlags & vk::QueueFlagBits::eGraphics;
+            });
+
+        return static_cast<uint32_t>(std::distance(queueFamilyProperties.begin(), graphicsQueueFamilyProperty));
     }
 
     Renderer::~Renderer()
