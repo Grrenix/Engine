@@ -1,3 +1,3 @@
 #pragma once
-#include "application/application.hpp"
-#include "platform/window.hpp"
+#include "engine/application/application.hpp"
+#include "engine/platform/window.hpp"

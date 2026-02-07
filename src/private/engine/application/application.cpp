@@ -1,10 +1,10 @@
-#include "application/application.hpp"
+#include "engine/application/application.hpp"
 
-#include "platform/window.hpp"
-#include "events/window_events.hpp"
-#include "events/input_events.hpp"
-#include "events/update_event.hpp"
-#include "input/input_state.hpp"
+#include "engine/platform/window.hpp"
+#include "engine/events/window_events.hpp"
+#include "engine/events/input_events.hpp"
+#include "engine/events/update_event.hpp"
+#include "engine/input/input_state.hpp"
 
 namespace engine
 {
