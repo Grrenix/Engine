@@ -1,4 +1,4 @@
-#include "engine/application/input_state.hpp"
+#include "input/input_state.hpp"
 
 namespace engine::input
 {

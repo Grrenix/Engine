@@ -1,8 +1,8 @@
-#include "engine/application/window.hpp"
+#include "platform/window.hpp"
 
-#include "engine/application/application.hpp"
-#include "engine/events/window_events.hpp"
-#include "engine/events/input_events.hpp"
+#include "application/application.hpp"
+#include "events/window_events.hpp"
+#include "events/input_events.hpp"
 
 namespace engine
 {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "event.hpp"
-#include "engine/application/keyboard_map.hpp"
+#include "input/keyboard_map.hpp"
 
 namespace engine
 {

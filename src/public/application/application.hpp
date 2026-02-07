@@ -2,9 +2,9 @@
 
 #include <chrono>
 
-#include "engine/events/event_dispatcher.hpp"
-#include "engine/events/event_queue.hpp"
-#include "engine/application/input_state.hpp"
+#include "events/event_dispatcher.hpp"
+#include "events/event_queue.hpp"
+#include "input/input_state.hpp"
 
 namespace engine
 {
@@ -39,6 +39,6 @@ namespace engine
     private:
         Application() {};
 
-        static Application *p_Singleton;
+        static Application *s_Singleton;
     };
 }

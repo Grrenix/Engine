@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/application/keyboard_map.hpp"
+#include "input/keyboard_map.hpp"
 
 #include <unordered_map>
 
@@ -11,6 +11,7 @@ namespace engine::input
         Unpressed,
         Pressed
     };
+
     class InputState
     {
     public:

@@ -1,28 +1,28 @@
-#include "engine/application/application.hpp"
+#include "application/application.hpp"
 
-#include "engine/application/window.hpp"
-#include "engine/events/window_events.hpp"
-#include "engine/events/input_events.hpp"
-#include "engine/application/input_state.hpp"
-#include "engine/events/update_event.hpp"
+#include "platform/window.hpp"
+#include "events/window_events.hpp"
+#include "events/input_events.hpp"
+#include "events/update_event.hpp"
+#include "input/input_state.hpp"
 
 namespace engine
 {
 
-    Application *Application::p_Singleton = nullptr;
+    Application *Application::s_Singleton = nullptr;
 
     Application *Application::GetApplication()
     {
-        return p_Singleton;
+        return s_Singleton;
     }
 
     Application *Application::New()
     {
-        p_Singleton = new Application();
-        p_Singleton->m_EventDispatcher = new EventDispatcher();
-        p_Singleton->m_EventQueue = new EventQueue();
-        p_Singleton->m_InputStates = new input::InputState();
-        return p_Singleton;
+        s_Singleton = new Application();
+        s_Singleton->m_EventDispatcher = new EventDispatcher();
+        s_Singleton->m_EventQueue = new EventQueue();
+        s_Singleton->m_InputStates = new input::InputState();
+        return s_Singleton;
     }
 
     Application *Application::WithWindowSpec(WindowSpec *Spec)
@@ -40,19 +40,18 @@ namespace engine
         while (!m_Window->WindowShouldClose())
 
         {
+            glfwPollEvents();
             auto currentTime = std::chrono::high_resolution_clock::now();
             m_DeltaTime = std::chrono::duration<float>(currentTime - m_PreviousTime).count();
             m_PreviousTime = currentTime;
 
             m_EventQueue->Push(UpdateEvent(m_DeltaTime));
 
-            glfwPollEvents();
-
             m_EventQueue->DispatchAll(m_EventDispatcher);
         }
 
         // Window Destroyed
-        Application::GetApplication()->m_EventQueue->Push(WindowDestroyedEvent(m_Window));
+        m_EventQueue->Push(WindowDestroyedEvent(m_Window));
         m_EventQueue->DispatchEventType<WindowDestroyedEvent>(m_EventDispatcher);
     }
     float Application::GetDeltaTime() const

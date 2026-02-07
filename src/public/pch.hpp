@@ -1,10 +1,12 @@
 #pragma once
 
 // ===== Standard library =====
+#include <cstddef>  // For std::size_t
 #include <cstdint>
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <functional>
 #include <algorithm>
