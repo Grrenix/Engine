@@ -61,8 +61,14 @@ namespace engine
         m_Window.reset();
         m_EventQueue->DispatchEventType<WindowDestroyedEvent>(m_EventDispatcher);
     }
+
     float Application::GetDeltaTime() const
     {
         return m_DeltaTime;
     }
+
+    const std::shared_ptr<Window> Application::GetWindow() const
+    {
+        return m_Window;
+    };
 }

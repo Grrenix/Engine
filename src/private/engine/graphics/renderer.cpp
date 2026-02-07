@@ -1,4 +1,6 @@
 #include "engine/graphics/renderer.hpp"
+#include "engine/application/application.hpp"
+#include "engine/platform/window.hpp"
 
 #include <iostream>
 
@@ -24,12 +26,14 @@ namespace engine::graphics
         : m_Context(),
           m_Instance(nullptr),
           m_DebugMessenger(nullptr),
+          m_Surface(nullptr),
           m_PhysicalDevice(nullptr),
           m_Device(nullptr),
           m_GraphicsQueue(nullptr)
     {
         CreateInstance();
         SetupDebugMessenger();
+        CreateSurface();
         PickPhysicalDevice();
         CreateLogicalDevice();
     }
@@ -102,6 +106,18 @@ namespace engine::graphics
 #endif
     }
 
+    void Renderer::CreateSurface()
+    {
+        VkSurfaceKHR _surface;
+        GLFWwindow *window = Application::GetApplication()->GetWindow()->GetWindowHandle();
+        if (glfwCreateWindowSurface(*m_Instance, window, nullptr, &_surface) != 0)
+        {
+            throw std::runtime_error("Failed to create window surface!");
+        }
+
+        m_Surface = vk::raii::SurfaceKHR(m_Instance, _surface);
+    }
+
     void Renderer::PickPhysicalDevice()
     {
         auto devices = m_Instance.enumeratePhysicalDevices();
@@ -119,7 +135,7 @@ namespace engine::graphics
 
         auto extensions = device.enumerateDeviceExtensionProperties();
         bool found = true;
-        for (auto const &extension : m_DeviceExtension)
+        for (auto const &extension : m_DeviceExtensions)
         {
             auto extensionIter = std::ranges::find_if(
                 extensions, [extension](auto const &ext) { return strcmp(ext.extensionName, extension) == 0; });
@@ -166,8 +182,8 @@ namespace engine::graphics
             .pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
             .queueCreateInfoCount = 1,
             .pQueueCreateInfos = &deviceQueueCreateInfo,
-            .enabledExtensionCount = static_cast<uint32_t>(m_DeviceExtension.size()),
-            .ppEnabledExtensionNames = m_DeviceExtension.data()};
+            .enabledExtensionCount = static_cast<uint32_t>(m_DeviceExtensions.size()),
+            .ppEnabledExtensionNames = m_DeviceExtensions.data()};
 
         m_Device = m_PhysicalDevice.createDevice(deviceCreateInfo);
         m_GraphicsQueue = m_Device.getQueue(graphicsIndex, 0);

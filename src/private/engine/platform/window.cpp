@@ -48,7 +48,7 @@ namespace engine
         return glfwWindowShouldClose(m_Window);
     }
 
-    const GLFWwindow *Window::GetWindowHandle()
+    GLFWwindow *Window::GetWindowHandle()
     {
         return m_Window;
     }

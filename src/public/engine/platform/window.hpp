@@ -22,7 +22,7 @@ namespace engine
         Window(WindowSpec *Spec);
         bool WindowShouldClose();
 
-        const GLFWwindow *GetWindowHandle();
+        GLFWwindow *GetWindowHandle();
 
         ~Window();
 

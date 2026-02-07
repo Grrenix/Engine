@@ -28,6 +28,8 @@ namespace engine
 
         float GetDeltaTime() const;
 
+        const std::shared_ptr<class Window> GetWindow() const;
+
     private:
         std::shared_ptr<class Window> m_Window = nullptr;
 
