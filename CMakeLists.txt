@@ -17,6 +17,7 @@ add_library(engine
     src/private/engine/events/update_event.cpp
     src/private/engine/events/input_events.cpp
     src/private/engine/events/window_events.cpp
+    src/private/engine/graphics/renderer.cpp
 )
 
 target_include_directories(engine
@@ -53,6 +54,7 @@ target_compile_definitions(engine
     PRIVATE
     VULKAN_HPP_ENABLE_RAII
     VULKAN_HPP_ENABLE_EXCEPTIONS
+    VULKAN_HPP_NO_STRUCT_CONSTRUCTORS
     VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1
 )
 
