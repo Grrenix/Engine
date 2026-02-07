@@ -4,6 +4,8 @@
 #include "engine/events/window_events.hpp"
 #include "engine/events/input_events.hpp"
 
+#include <GLFW/glfw3.h>
+
 namespace engine
 {
     Window::Window(WindowSpec *Spec)
@@ -20,6 +22,7 @@ namespace engine
         glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
 #endif
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
         if (Spec->Borderless)
         {
@@ -35,8 +38,9 @@ namespace engine
 
     Window::~Window()
     {
-        glfwDestroyWindow(m_Window);
         Application::GetApplication()->m_EventQueue->Push(WindowDestroyedEvent(this));
+        glfwDestroyWindow(m_Window);
+        glfwTerminate();
     }
 
     bool Window::WindowShouldClose()

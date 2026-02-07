@@ -19,26 +19,35 @@ namespace engine
     Application *Application::New()
     {
         s_Singleton = new Application();
-        s_Singleton->m_EventDispatcher = new EventDispatcher();
-        s_Singleton->m_EventQueue = new EventQueue();
-        s_Singleton->m_InputStates = new input::InputState();
+        s_Singleton->m_EventDispatcher = std::make_unique<EventDispatcher>();
+        s_Singleton->m_EventQueue = std::make_unique<EventQueue>();
+        s_Singleton->m_InputStates = std::make_unique<input::InputState>();
         return s_Singleton;
     }
 
     Application *Application::WithWindowSpec(WindowSpec *Spec)
     {
-        m_Window = new Window(Spec);
+        m_Window = std::make_shared<Window>(Spec);
         return this;
     }
 
     void Application::Run()
     {
-        m_EventDispatcher->Subscribe<engine::KeyPressedEvent>([&](const engine::KeyPressedEvent &e)
-                                                              { m_InputStates->SetState(e.Data, input::KeyState::Pressed); });
-        m_EventDispatcher->Subscribe<engine::KeyReleasedEvent>([&](const engine::KeyReleasedEvent &e)
-                                                               { m_InputStates->SetState(e.Data, input::KeyState::Unpressed); });
-        while (!m_Window->WindowShouldClose())
 
+        m_Renderer = std::make_unique<graphics::Renderer>();
+
+        m_EventDispatcher->Subscribe<engine::KeyPressedEvent>(
+            [&](const engine::KeyPressedEvent &e)
+            {
+                m_InputStates->SetState(e.Data, input::KeyState::Pressed);
+            });
+        m_EventDispatcher->Subscribe<engine::KeyReleasedEvent>(
+            [&](const engine::KeyReleasedEvent &e)
+            {
+                m_InputStates->SetState(e.Data, input::KeyState::Unpressed);
+            });
+
+        while (!m_Window->WindowShouldClose())
         {
             glfwPollEvents();
             auto currentTime = std::chrono::high_resolution_clock::now();
@@ -50,8 +59,10 @@ namespace engine
             m_EventQueue->DispatchAll(m_EventDispatcher);
         }
 
+        m_Renderer.reset();
+
         // Window Destroyed
-        m_EventQueue->Push(WindowDestroyedEvent(m_Window));
+        m_Window.reset();
         m_EventQueue->DispatchEventType<WindowDestroyedEvent>(m_EventDispatcher);
     }
     float Application::GetDeltaTime() const

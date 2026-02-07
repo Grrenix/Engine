@@ -1,10 +1,12 @@
 #pragma once
 
 #include <chrono>
+#include <memory>
 
 #include "engine/events/event_dispatcher.hpp"
 #include "engine/events/event_queue.hpp"
 #include "engine/input/input_state.hpp"
+#include "engine/graphics/renderer.hpp"
 
 namespace engine
 {
@@ -17,15 +19,17 @@ namespace engine
 
         void Run();
 
-        EventDispatcher *m_EventDispatcher = nullptr;
-        EventQueue *m_EventQueue = nullptr;
+        std::unique_ptr<EventDispatcher> m_EventDispatcher = nullptr;
+        std::unique_ptr<EventQueue> m_EventQueue = nullptr;
 
-        input::InputState *m_InputStates = nullptr;
+        std::unique_ptr<input::InputState> m_InputStates = nullptr;
+
+        std::unique_ptr<graphics::Renderer> m_Renderer = nullptr;
 
         float GetDeltaTime() const;
 
     private:
-        class Window *m_Window = nullptr;
+        std::shared_ptr<class Window> m_Window = nullptr;
 
         std::chrono::high_resolution_clock::time_point m_PreviousTime;
         float m_DeltaTime;

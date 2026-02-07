@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-#include <GLFW/glfw3.h>
+class GLFWwindow;
 
 namespace engine
 {
