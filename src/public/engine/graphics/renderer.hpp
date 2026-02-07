@@ -1,4 +1,13 @@
-#include "vulkan/vulkan_raii.hpp"
+
+#include <vector>
+
+namespace vk::raii
+{
+    class Context;
+    class DebugUtilsMessengerEXT;
+    class Instance;
+    class PhysicalDevice;
+}
 
 namespace engine::graphics
 {
@@ -9,7 +18,15 @@ namespace engine::graphics
         ~Renderer();
 
     protected:
-        vk::raii::Context m_Context;
-        vk::raii::Instance m_Instance = nullptr;
+        void CreateInstance();
+        void SetupDebugMessenger();
+        void PickPhysicalDevice();
+
+        std::vector<const char *> GetRequiredExtensions();
+
+        std::unique_ptr<vk::raii::Context> m_Context;
+        std::unique_ptr<vk::raii::Instance> m_Instance;
+        std::unique_ptr<vk::raii::DebugUtilsMessengerEXT> m_DebugMessenger;
+        std::unique_ptr<vk::raii::PhysicalDevice> m_PhysicalDevice;
     };
 }
