@@ -43,4 +43,4 @@ set(NVRHI_WITH_DX12 OFF CACHE BOOL "" FORCE)
 set(NVRHI_INSTALL OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(external/nvrhi)
-target_link_libraries(engine PUBLIC nvrhi)
+target_link_libraries(engine PUBLIC nvrhi nvrhi_vk)
