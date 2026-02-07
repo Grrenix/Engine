@@ -35,12 +35,3 @@ set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(external/glfw)
 target_link_libraries(engine PUBLIC glfw)
-
-
-set(NVRHI_WITH_VULKAN ON CACHE BOOL "" FORCE)
-set(NVRHI_WITH_DX11 OFF CACHE BOOL "" FORCE)
-set(NVRHI_WITH_DX12 OFF CACHE BOOL "" FORCE)
-set(NVRHI_INSTALL OFF CACHE BOOL "" FORCE)
-
-add_subdirectory(external/nvrhi)
-target_link_libraries(engine PUBLIC nvrhi nvrhi_vk)
