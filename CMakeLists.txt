@@ -75,3 +75,39 @@ if(DEFINED ENV{VULKAN_SDK})
 else()
     message(FATAL_ERROR "VULKAN_SDK environment variable not set! Cannot find Slang headers/libs.")
 endif()
+
+if(NOT SLANGC_EXECUTABLE)
+    find_program(SLANGC_EXECUTABLE slangc HINTS $ENV{VULKAN_SDK}/bin)
+
+    if(NOT SLANGC_EXECUTABLE)
+        message(FATAL_ERROR "Slang compiler not found! Ensure it is installed and available in the PATH or VULKAN_SDK/bin.")
+    endif()
+endif()
+
+function(add_slang_shader_target TARGET)
+    cmake_parse_arguments("SHADER" "" "" "SOURCES" ${ARGN})
+    set(SHADERS_DIR ${CMAKE_CURRENT_LIST_DIR}/shaders)
+    set(ENTRY_POINTS -entry vertMain -entry fragMain)
+
+    foreach(SHADER_FILE IN LISTS SHADER_SOURCES)
+        get_filename_component(SHADER_DIR ${SHADER_FILE} DIRECTORY)
+        get_filename_component(SHADER_NAME ${SHADER_FILE} NAME_WE)
+        set(SPIRV_FILE ${SHADERS_DIR}/${SHADER_DIR}/${SHADER_NAME}.spv)
+
+        add_custom_command(
+            OUTPUT ${SPIRV_FILE}
+            COMMAND ${SLANGC_EXECUTABLE} ${SHADERS_DIR}/${SHADER_FILE} -target spirv -profile spirv_1_4 -emit-spirv-directly -fvk-use-entrypoint-name ${ENTRY_POINTS} -o ${SPIRV_FILE}
+            WORKING_DIRECTORY ${SHADERS_DIR}
+            DEPENDS ${SHADERS_DIR}/${SHADER_FILE}
+            COMMENT "Compiling Slang Shader: ${SHADER_FILE}"
+            VERBATIM
+        )
+
+        list(APPEND SPIRV_FILES ${SPIRV_FILE})
+    endforeach()
+
+    add_custom_target(${TARGET} DEPENDS ${SPIRV_FILES})
+endfunction()
+
+add_slang_shader_target(shaders SOURCES triangle.slang)
+add_dependencies(engine shaders)
