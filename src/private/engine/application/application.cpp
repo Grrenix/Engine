@@ -43,6 +43,13 @@ namespace engine
             [&](const engine::KeyReleasedEvent &e)
             { m_InputStates->SetState(e.Data, input::KeyState::Unpressed); });
 
+        m_EventDispatcher->Subscribe<engine::MouseButtonClickEvent>(
+            [&](const engine::MouseButtonClickEvent &e)
+            { m_InputStates->SetState(e.Button, input::KeyState::Pressed); });
+        m_EventDispatcher->Subscribe<engine::MouseButtonReleaseEvent>(
+            [&](const engine::MouseButtonReleaseEvent &e)
+            { m_InputStates->SetState(e.Button, input::KeyState::Unpressed); });
+
         while (!m_Window->WindowShouldClose())
         {
             glfwPollEvents();

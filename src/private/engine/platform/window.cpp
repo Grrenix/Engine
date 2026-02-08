@@ -3,8 +3,7 @@
 #include "engine/application/application.hpp"
 #include "engine/events/window_events.hpp"
 #include "engine/events/input_events.hpp"
-
-#include <GLFW/glfw3.h>
+#include "GLFW/glfw3.h"
 
 namespace engine
 {
@@ -32,6 +31,9 @@ namespace engine
         m_Window = glfwCreateWindow(Spec->Width, Spec->Height, Spec->Title.data(), Spec->Fullscreen ? glfwGetPrimaryMonitor() : NULL, NULL);
 
         glfwSetKeyCallback(m_Window, KeyCallback);
+        glfwSetCursorPosCallback(m_Window, MouseInputCallback);
+        glfwSetMouseButtonCallback(m_Window, MouseButtonCallback);
+        glfwSetScrollCallback(m_Window, MouseScrollCallback);
 
         Application::GetApplication()->m_EventQueue->Push(WindowOpenedEvent(this));
     }
@@ -48,10 +50,11 @@ namespace engine
         return glfwWindowShouldClose(m_Window);
     }
 
-    GLFWwindow *Window::GetWindowHandle()
+    void *Window::GetWindowHandle()
     {
         return m_Window;
     }
+
     void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
     {
         if (action == GLFW_PRESS)
@@ -62,5 +65,27 @@ namespace engine
         {
             Application::GetApplication()->m_EventQueue->Push(KeyReleasedEvent(key));
         }
+    }
+
+    void MouseInputCallback(GLFWwindow *window, double xpos, double ypos)
+    {
+        Application::GetApplication()->m_EventQueue->Push(MouseMovedEvent(xpos, ypos));
+    }
+
+    void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
+    {
+        if (action == GLFW_PRESS)
+        {
+            Application::GetApplication()->m_EventQueue->Push(MouseButtonClickEvent(button));
+        }
+        else
+        {
+            Application::GetApplication()->m_EventQueue->Push(MouseButtonReleaseEvent(button));
+        }
+    }
+
+    void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
+    {
+        Application::GetApplication()->m_EventQueue->Push(MouseScrollEvent(xoffset, yoffset));
     }
 }

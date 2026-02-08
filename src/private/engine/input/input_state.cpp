@@ -4,8 +4,21 @@ namespace engine::input
 {
     KeyState InputState::GetState(Key key)
     {
-        auto it = m_States.find(key);
-        if (it != m_States.end())
+        auto it = m_KeyboardStates.find(key);
+        if (it != m_KeyboardStates.end())
+        {
+            return it->second;
+        }
+        else
+        {
+            return KeyState::Unpressed;
+        }
+    }
+
+    KeyState InputState::GetState(MouseButton button)
+    {
+        auto it = m_MouseStates.find(button);
+        if (it != m_MouseStates.end())
         {
             return it->second;
         }
@@ -17,7 +30,12 @@ namespace engine::input
 
     void InputState::SetState(Key key, KeyState state)
     {
-        m_States.insert_or_assign(key, state);
+        m_KeyboardStates.insert_or_assign(key, state);
+    }
+
+    void InputState::SetState(MouseButton button, KeyState state)
+    {
+        m_MouseStates.insert_or_assign(button, state);
     }
 
 }

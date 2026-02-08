@@ -22,7 +22,7 @@ namespace engine
         Window(WindowSpec *Spec);
         bool WindowShouldClose();
 
-        GLFWwindow *GetWindowHandle();
+        void *GetWindowHandle();
 
         ~Window();
 
@@ -31,4 +31,7 @@ namespace engine
         GLFWwindow *m_Window = nullptr;
     };
     void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
+    void MouseInputCallback(GLFWwindow *window, double xpos, double ypos);
+    void MouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
+    void MouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset);
 }

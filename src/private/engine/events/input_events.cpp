@@ -37,4 +37,52 @@ namespace engine
     {
         Data = EngineKey;
     }
+
+    MouseMovedEvent::MouseMovedEvent(double inPosX, double inPosY)
+    {
+        PosX = inPosX;
+        PosY = inPosY;
+    }
+
+    MouseButtonClickEvent::MouseButtonClickEvent(int inButton)
+    {
+        auto it = input::GlfwButtonToEngine.find(inButton);
+        if (it != input::GlfwButtonToEngine.end())
+        {
+            Button = it->second;
+        }
+        else
+        {
+            Button = input::MouseButton::bUnknown;
+        }
+    }
+
+    MouseButtonClickEvent::MouseButtonClickEvent(input::MouseButton inButton)
+    {
+        Button = inButton;
+    }
+
+    MouseButtonReleaseEvent::MouseButtonReleaseEvent(int inButton)
+    {
+        auto it = input::GlfwButtonToEngine.find(inButton);
+        if (it != input::GlfwButtonToEngine.end())
+        {
+            Button = it->second;
+        }
+        else
+        {
+            Button = input::MouseButton::bUnknown;
+        }
+    }
+
+    MouseButtonReleaseEvent::MouseButtonReleaseEvent(input::MouseButton inButton)
+    {
+        Button = inButton;
+    }
+
+    MouseScrollEvent::MouseScrollEvent(double inDirX, double inDirY)
+    {
+        DirX = inDirX;
+        DirY = inDirY;
+    }
 }

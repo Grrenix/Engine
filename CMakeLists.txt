@@ -10,6 +10,7 @@ add_library(engine
     src/private/engine/application/application.cpp
     src/private/engine/input/input_state.cpp
     src/private/engine/input/keyboard_map.cpp
+    src/private/engine/input/mouse.cpp
     src/private/engine/platform/window.cpp
     src/private/engine/events/event_dispatcher.cpp
     src/private/engine/events/event_queue.cpp
