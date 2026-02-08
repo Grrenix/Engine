@@ -3,6 +3,7 @@
 #include "engine/platform/window.hpp"
 
 #include <iostream>
+#include <fstream>
 
 #include "GLFW/glfw3.h"
 
@@ -31,7 +32,9 @@ namespace engine::graphics
           m_Device(nullptr),
           m_GraphicsQueue(nullptr),
           m_PresentQueue(nullptr),
-          m_SwapChain(nullptr)
+          m_SwapChain(nullptr),
+          m_PipelineLayout(nullptr),
+          m_GraphicsPipeline(nullptr)
     {
         CreateInstance();
         SetupDebugMessenger();
@@ -45,11 +48,12 @@ namespace engine::graphics
 
     void Renderer::CreateInstance()
     {
-        constexpr vk::ApplicationInfo appInfo{.pApplicationName = "GameA",
-                                              .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-                                              .pEngineName = "Engine",
-                                              .engineVersion = VK_MAKE_VERSION(1, 0, 0),
-                                              .apiVersion = vk::ApiVersion14};
+        constexpr vk::ApplicationInfo appInfo{
+            .pApplicationName = "GameA",
+            .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
+            .pEngineName = "Engine",
+            .engineVersion = VK_MAKE_VERSION(1, 0, 0),
+            .apiVersion = vk::ApiVersion14};
 
 #ifndef NDEBUG
         std::vector<const char *> requiredLayers;
@@ -81,13 +85,14 @@ namespace engine::graphics
             }
         }
 
-        vk::InstanceCreateInfo createInfo{.pApplicationInfo = &appInfo,
+        vk::InstanceCreateInfo createInfo{
+            .pApplicationInfo = &appInfo,
 #ifndef NDEBUG
-                                          .enabledLayerCount = static_cast<uint32_t>(requiredLayers.size()),
-                                          .ppEnabledLayerNames = requiredLayers.data(),
+            .enabledLayerCount = static_cast<uint32_t>(requiredLayers.size()),
+            .ppEnabledLayerNames = requiredLayers.data(),
 #endif
-                                          .enabledExtensionCount = (uint32_t)requiredExtensions.size(),
-                                          .ppEnabledExtensionNames = requiredExtensions.data()};
+            .enabledExtensionCount = (uint32_t)requiredExtensions.size(),
+            .ppEnabledExtensionNames = requiredExtensions.data()};
 
         m_Instance = m_Context.createInstance(createInfo);
     }
@@ -98,12 +103,15 @@ namespace engine::graphics
         return;
 #else
         vk::DebugUtilsMessageSeverityFlagsEXT severityFlags(
-            vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo | vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
-            vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo |
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eError);
 
-        vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
-                                                           vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
-                                                           vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
+        vk::DebugUtilsMessageTypeFlagsEXT messageTypeFlags(
+            vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
+            vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance |
+            vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
 
         vk::DebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfoEXT{
             .messageSeverity = severityFlags, .messageType = messageTypeFlags, .pfnUserCallback = &DebugCallback};
@@ -209,10 +217,12 @@ namespace engine::graphics
         }
         vk::StructureChain<
             vk::PhysicalDeviceFeatures2,
+            vk::PhysicalDeviceVulkan11Features,
             vk::PhysicalDeviceVulkan13Features,
             vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>
             featureChain = {
                 {},
+                {.shaderDrawParameters = true},
                 {.dynamicRendering = true},
                 {.extendedDynamicState = true}};
 
@@ -302,8 +312,109 @@ namespace engine::graphics
         }
     }
 
+    static std::vector<char> read_file(const std::string &filename)
+    {
+        std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+        if (!file.is_open())
+        {
+            throw std::runtime_error("Failed to open file!");
+        }
+
+        std::vector<char> buffer(file.tellg());
+        file.seekg(0, std::ios::beg);
+        file.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+
+        file.close();
+
+        return buffer;
+    }
+
     void Renderer::CreateGraphicsPipeline()
     {
+        vk::raii::ShaderModule shaderModule = CreateShaderModule(read_file("engine/shaders/triangle.spv"));
+
+        vk::PipelineShaderStageCreateInfo vertShaderStageInfo{
+            .stage = vk::ShaderStageFlagBits::eVertex,
+            .module = shaderModule,
+            .pName = "vertMain"};
+        vk::PipelineShaderStageCreateInfo fragShaderStageInfo{
+            .stage = vk::ShaderStageFlagBits::eFragment,
+            .module = shaderModule,
+            .pName = "fragMain"};
+
+        vk::PipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+
+        vk::PipelineVertexInputStateCreateInfo vertexInputInfo;
+
+        vk::PipelineInputAssemblyStateCreateInfo inputAssembly{
+            .topology = vk::PrimitiveTopology::eTriangleList};
+
+        std::vector DynamicStates = {
+            vk::DynamicState::eViewport,
+            vk::DynamicState::eScissor};
+
+        vk::PipelineDynamicStateCreateInfo dynamicState{
+            .dynamicStateCount = static_cast<uint32_t>(DynamicStates.size()),
+            .pDynamicStates = DynamicStates.data()};
+
+        vk::PipelineViewportStateCreateInfo viewportState{
+            .viewportCount = 1,
+            .scissorCount = 1};
+
+        vk::PipelineRasterizationStateCreateInfo rasterizerInfo{
+            .depthClampEnable = vk::False,
+            .rasterizerDiscardEnable = vk::False,
+            .polygonMode = vk::PolygonMode::eFill,
+            .cullMode = vk::CullModeFlagBits::eBack,
+            .frontFace = vk::FrontFace::eClockwise,
+            .depthBiasEnable = vk::False,
+            .depthBiasSlopeFactor = 1.0f,
+            .lineWidth = 1.0f};
+
+        vk::PipelineMultisampleStateCreateInfo multisamplingInfo{
+            .rasterizationSamples = vk::SampleCountFlagBits::e1,
+            .sampleShadingEnable = vk::False};
+
+        vk::PipelineColorBlendAttachmentState colorBlendAttachmentInfo{
+            .blendEnable = vk::False,
+            .colorWriteMask =
+                vk::ColorComponentFlagBits::eR |
+                vk::ColorComponentFlagBits::eG |
+                vk::ColorComponentFlagBits::eB |
+                vk::ColorComponentFlagBits::eA};
+
+        vk::PipelineColorBlendStateCreateInfo colorBlendStateInfo{
+            .logicOpEnable = vk::False,
+            .logicOp = vk::LogicOp::eCopy,
+            .attachmentCount = 1,
+            .pAttachments = &colorBlendAttachmentInfo};
+
+        vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
+            .setLayoutCount = 0,
+            .pushConstantRangeCount = 0};
+
+        m_PipelineLayout = m_Device.createPipelineLayout(pipelineLayoutInfo);
+
+        vk::PipelineRenderingCreateInfo pipelineRenderingInfo{
+            .colorAttachmentCount = 1,
+            .pColorAttachmentFormats = &m_SwapChainSurfaceFormat.format};
+
+        vk::GraphicsPipelineCreateInfo pipelineInfo{
+            .pNext = &pipelineRenderingInfo,
+            .stageCount = 2,
+            .pStages = shaderStages,
+            .pVertexInputState = &vertexInputInfo,
+            .pInputAssemblyState = &inputAssembly,
+            .pViewportState = &viewportState,
+            .pRasterizationState = &rasterizerInfo,
+            .pMultisampleState = &multisamplingInfo,
+            .pColorBlendState = &colorBlendStateInfo,
+            .pDynamicState = &dynamicState,
+            .layout = m_PipelineLayout,
+            .renderPass = nullptr};
+
+        m_GraphicsPipeline = m_Device.createGraphicsPipeline(nullptr, pipelineInfo);
     }
 
     std::vector<const char *> Renderer::GetRequiredExtensions()
@@ -373,7 +484,17 @@ namespace engine::graphics
             std::clamp<uint32_t>(height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height)};
     }
 
+    vk::raii::ShaderModule Renderer::CreateShaderModule(const std::vector<char> &code) const
+    {
+        vk::ShaderModuleCreateInfo CreateInfo{
+            .codeSize = code.size() * sizeof(char),
+            .pCode = reinterpret_cast<const uint32_t *>(code.data())};
+
+        return m_Device.createShaderModule(CreateInfo);
+    }
+
     Renderer::~Renderer()
     {
     }
+
 }

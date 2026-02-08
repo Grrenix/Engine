@@ -27,6 +27,7 @@ namespace engine::graphics
         vk::SurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR> &availableFormats);
         vk::PresentModeKHR ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR> &availablePresentModes);
         vk::Extent2D ChooseSwapExtent(const vk::SurfaceCapabilitiesKHR &capabilities);
+        [[nodiscard]] vk::raii::ShaderModule CreateShaderModule(const std::vector<char> &code) const;
 
         const std::vector<char const *> m_DeviceExtensions = {vk::KHRSwapchainExtensionName};
 
@@ -43,6 +44,8 @@ namespace engine::graphics
         vk::raii::SwapchainKHR m_SwapChain;
         std::vector<vk::Image> m_SwapChainImages;
         std::vector<vk::raii::ImageView> m_SwapChainImageViews;
+        vk::raii::PipelineLayout m_PipelineLayout;
+        vk::raii::Pipeline m_GraphicsPipeline;
 
         vk::SurfaceFormatKHR m_SwapChainSurfaceFormat;
         vk::Extent2D m_SwapChainExtent;
