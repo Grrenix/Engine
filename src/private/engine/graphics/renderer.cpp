@@ -30,13 +30,15 @@ namespace engine::graphics
           m_PhysicalDevice(nullptr),
           m_Device(nullptr),
           m_GraphicsQueue(nullptr),
-          m_PresentQueue(nullptr)
+          m_PresentQueue(nullptr),
+          m_SwapChain(nullptr)
     {
         CreateInstance();
         SetupDebugMessenger();
         CreateSurface();
         PickPhysicalDevice();
         CreateLogicalDevice();
+        CreateSwapChain();
     }
 
     void Renderer::CreateInstance()
@@ -213,21 +215,89 @@ namespace engine::graphics
                 {.extendedDynamicState = true}};
 
         float queuePriority = 0.5f;
-        vk::DeviceQueueCreateInfo deviceQueueCreateInfo{
-            .queueFamilyIndex = graphicsIndex,
-            .queueCount = 1,
-            .pQueuePriorities = &queuePriority};
+        std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos{};
+        queueCreateInfos.push_back({.queueFamilyIndex = graphicsIndex,
+                                    .queueCount = 1,
+                                    .pQueuePriorities = &queuePriority});
+        if (graphicsIndex != presentIndex)
+        {
+            queueCreateInfos.push_back({.queueFamilyIndex = presentIndex,
+                                        .queueCount = 1,
+                                        .pQueuePriorities = &queuePriority});
+        }
 
         vk::DeviceCreateInfo deviceCreateInfo{
             .pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
-            .queueCreateInfoCount = 1,
-            .pQueueCreateInfos = &deviceQueueCreateInfo,
+            .queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
+            .pQueueCreateInfos = queueCreateInfos.data(),
             .enabledExtensionCount = static_cast<uint32_t>(m_DeviceExtensions.size()),
             .ppEnabledExtensionNames = m_DeviceExtensions.data()};
 
         m_Device = m_PhysicalDevice.createDevice(deviceCreateInfo);
         m_GraphicsQueue = m_Device.getQueue(graphicsIndex, 0);
+        m_GraphicsFamilyIndex = graphicsIndex;
         m_GraphicsQueue = m_Device.getQueue(presentIndex, 0);
+        m_PresentFamilyIndex = presentIndex;
+    }
+
+    void Renderer::CreateSwapChain()
+    {
+        auto surfaceCapabilities = m_PhysicalDevice.getSurfaceCapabilitiesKHR(*m_Surface);
+        m_SwapChainSurfaceFormat = ChooseSwapSurfaceFormat(m_PhysicalDevice.getSurfaceFormatsKHR(*m_Surface));
+        m_SwapChainExtent = ChooseSwapExtent(surfaceCapabilities);
+        auto minImageCount = std::max(3u, surfaceCapabilities.minImageCount);
+        minImageCount = (surfaceCapabilities.maxImageCount > 0 && minImageCount > surfaceCapabilities.maxImageCount)
+                            ? surfaceCapabilities.maxImageCount
+                            : minImageCount;
+
+        vk::SwapchainCreateInfoKHR swapChainCreateInfo{
+            .flags = vk::SwapchainCreateFlagsKHR(),
+            .surface = *m_Surface,
+            .minImageCount = minImageCount,
+            .imageFormat = m_SwapChainSurfaceFormat.format,
+            .imageColorSpace = m_SwapChainSurfaceFormat.colorSpace,
+            .imageExtent = m_SwapChainExtent,
+            .imageArrayLayers = 1,
+            .imageUsage = vk::ImageUsageFlagBits::eColorAttachment,
+            .imageSharingMode = vk::SharingMode::eExclusive,
+            .preTransform = surfaceCapabilities.currentTransform,
+            .compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque,
+            .presentMode = ChooseSwapPresentMode(m_PhysicalDevice.getSurfacePresentModesKHR(*m_Surface)),
+            .clipped = vk::True,
+            .oldSwapchain = nullptr};
+
+        uint32_t queueFamilyIndices[] = {m_GraphicsFamilyIndex, m_PresentFamilyIndex};
+
+        if (m_GraphicsFamilyIndex != m_PresentFamilyIndex)
+        {
+            swapChainCreateInfo.imageSharingMode = vk::SharingMode::eConcurrent;
+            swapChainCreateInfo.queueFamilyIndexCount = 2;
+            swapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
+        }
+
+        m_SwapChain = m_Device.createSwapchainKHR(swapChainCreateInfo);
+        m_SwapChainImages = m_SwapChain.getImages();
+    }
+
+    void Renderer::CreateImageViews()
+    {
+        m_SwapChainImageViews.clear();
+
+        vk::ImageViewCreateInfo imageViewCreateInfo{
+            .viewType = vk::ImageViewType::e2D,
+            .format = m_SwapChainSurfaceFormat.format,
+            .subresourceRange = vk::ImageSubresourceRange{
+                .aspectMask = vk::ImageAspectFlagBits::eColor,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1}};
+
+        for (auto image : m_SwapChainImages)
+        {
+            imageViewCreateInfo.image = image;
+            m_SwapChainImageViews.emplace_back(m_Device, imageViewCreateInfo);
+        }
     }
 
     std::vector<const char *> Renderer::GetRequiredExtensions()
@@ -256,6 +326,45 @@ namespace engine::graphics
             });
 
         return static_cast<uint32_t>(std::distance(queueFamilyProperties.begin(), graphicsQueueFamilyProperty));
+    }
+
+    vk::SurfaceFormatKHR Renderer::ChooseSwapSurfaceFormat(const std::vector<vk::SurfaceFormatKHR> &availableFormats)
+    {
+        for (const auto &availableFormat : availableFormats)
+        {
+            if (availableFormat.format == vk::Format::eB8G8R8A8Srgb && availableFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
+            {
+                return availableFormat;
+            }
+        }
+
+        return availableFormats[0];
+    }
+
+    vk::PresentModeKHR Renderer::ChooseSwapPresentMode(const std::vector<vk::PresentModeKHR> &availablePresentModes)
+    {
+        for (const auto &availablePresentMode : availablePresentModes)
+        {
+            if (availablePresentMode == vk::PresentModeKHR::eMailbox)
+            {
+                return availablePresentMode;
+            }
+        }
+        return vk::PresentModeKHR::eFifo;
+    }
+
+    vk::Extent2D Renderer::ChooseSwapExtent(const vk::SurfaceCapabilitiesKHR &capabilities)
+    {
+        if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+        {
+            return capabilities.currentExtent;
+        }
+
+        auto [width, height] = Application::GetApplication()->GetWindow()->GetFramebufferSize();
+
+        return {
+            std::clamp<uint32_t>(width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
+            std::clamp<uint32_t>(height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height)};
     }
 
     Renderer::~Renderer()

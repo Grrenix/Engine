@@ -23,6 +23,7 @@ namespace engine
         bool WindowShouldClose();
 
         void *GetWindowHandle();
+        std::pair<int, int> GetFramebufferSize();
 
         ~Window();
 

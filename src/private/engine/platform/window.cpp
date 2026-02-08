@@ -55,6 +55,13 @@ namespace engine
         return m_Window;
     }
 
+    std::pair<int, int> Window::GetFramebufferSize()
+    {
+        int width, height;
+        glfwGetFramebufferSize(m_Window, &width, &height);
+        return std::make_pair(width, height);
+    }
+
     void KeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
     {
         if (action == GLFW_PRESS)
