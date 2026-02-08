@@ -39,6 +39,8 @@ namespace engine::graphics
         PickPhysicalDevice();
         CreateLogicalDevice();
         CreateSwapChain();
+        CreateImageViews();
+        CreateGraphicsPipeline();
     }
 
     void Renderer::CreateInstance()
@@ -298,6 +300,10 @@ namespace engine::graphics
             imageViewCreateInfo.image = image;
             m_SwapChainImageViews.emplace_back(m_Device, imageViewCreateInfo);
         }
+    }
+
+    void Renderer::CreateGraphicsPipeline()
+    {
     }
 
     std::vector<const char *> Renderer::GetRequiredExtensions()

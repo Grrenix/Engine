@@ -20,6 +20,7 @@ namespace engine::graphics
         void CreateLogicalDevice();
         void CreateSwapChain();
         void CreateImageViews();
+        void CreateGraphicsPipeline();
 
         std::vector<const char *> GetRequiredExtensions();
         uint32_t FindQueueFamilies(vk::raii::PhysicalDevice physicalDevice);
