@@ -1,3 +1,4 @@
+#pragma once
 
 #include <vector>
 
@@ -30,5 +31,6 @@ namespace engine::graphics
         vk::raii::PhysicalDevice m_PhysicalDevice;
         vk::raii::Device m_Device;
         vk::raii::Queue m_GraphicsQueue;
+        vk::raii::Queue m_PresentQueue;
     };
 }

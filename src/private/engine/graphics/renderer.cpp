@@ -29,7 +29,8 @@ namespace engine::graphics
           m_Surface(nullptr),
           m_PhysicalDevice(nullptr),
           m_Device(nullptr),
-          m_GraphicsQueue(nullptr)
+          m_GraphicsQueue(nullptr),
+          m_PresentQueue(nullptr)
     {
         CreateInstance();
         SetupDebugMessenger();
@@ -109,7 +110,7 @@ namespace engine::graphics
     void Renderer::CreateSurface()
     {
         VkSurfaceKHR _surface;
-        GLFWwindow *window = Application::GetApplication()->GetWindow()->GetWindowHandle();
+        GLFWwindow *window = (GLFWwindow *)Application::GetApplication()->GetWindow()->GetWindowHandle();
         if (glfwCreateWindowSurface(*m_Instance, window, nullptr, &_surface) != 0)
         {
             throw std::runtime_error("Failed to create window surface!");
@@ -160,15 +161,48 @@ namespace engine::graphics
     {
 
         std::vector<vk::QueueFamilyProperties> queueFamilyProperties = m_PhysicalDevice.getQueueFamilyProperties();
-        uint32_t graphicsIndex = FindQueueFamilies(m_PhysicalDevice);
 
-        float queuePriority = 0.5f;
+        auto graphicsQueueFamilyProperty = std::ranges::find_if(
+            queueFamilyProperties,
+            [](const auto &qfp)
+            {
+                return (qfp.queueFlags & vk::QueueFlagBits::eGraphics) != static_cast<vk::QueueFlags>(0);
+            });
 
-        vk::DeviceQueueCreateInfo deviceQueueCreateInfo{
-            .queueFamilyIndex = graphicsIndex,
-            .queueCount = 1,
-            .pQueuePriorities = &queuePriority};
+        auto graphicsIndex = static_cast<uint32_t>(std::distance(queueFamilyProperties.begin(), graphicsQueueFamilyProperty));
+        auto presentIndex = m_PhysicalDevice.getSurfaceSupportKHR(graphicsIndex, *m_Surface)
+                                ? graphicsIndex
+                                : static_cast<uint32_t>(queueFamilyProperties.size());
 
+        if (presentIndex == queueFamilyProperties.size())
+        {
+            for (size_t i = 0; i < queueFamilyProperties.size(); i++)
+            {
+                if ((queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics) &&
+                    m_PhysicalDevice.getSurfaceSupportKHR(static_cast<uint32_t>(i), *m_Surface))
+                {
+                    graphicsIndex = static_cast<uint32_t>(i);
+                    presentIndex = graphicsIndex;
+                    break;
+                }
+            }
+            if (presentIndex == queueFamilyProperties.size())
+            {
+                for (size_t i = 0; i < queueFamilyProperties.size(); i++)
+                {
+                    if (m_PhysicalDevice.getSurfaceSupportKHR(static_cast<uint32_t>(i), *m_Surface))
+                    {
+                        presentIndex = static_cast<uint32_t>(i);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if ((graphicsIndex == queueFamilyProperties.size()) || (presentIndex == queueFamilyProperties.size()))
+        {
+            throw std::runtime_error("Could not find a queue for graphics or present!");
+        }
         vk::StructureChain<
             vk::PhysicalDeviceFeatures2,
             vk::PhysicalDeviceVulkan13Features,
@@ -177,6 +211,12 @@ namespace engine::graphics
                 {},
                 {.dynamicRendering = true},
                 {.extendedDynamicState = true}};
+
+        float queuePriority = 0.5f;
+        vk::DeviceQueueCreateInfo deviceQueueCreateInfo{
+            .queueFamilyIndex = graphicsIndex,
+            .queueCount = 1,
+            .pQueuePriorities = &queuePriority};
 
         vk::DeviceCreateInfo deviceCreateInfo{
             .pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
@@ -187,6 +227,7 @@ namespace engine::graphics
 
         m_Device = m_PhysicalDevice.createDevice(deviceCreateInfo);
         m_GraphicsQueue = m_Device.getQueue(graphicsIndex, 0);
+        m_GraphicsQueue = m_Device.getQueue(presentIndex, 0);
     }
 
     std::vector<const char *> Renderer::GetRequiredExtensions()
